@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class StatePointAI : MonoBehaviour
 {
@@ -37,9 +38,11 @@ public class StatePointAI : MonoBehaviour
     private float maxHealth = 100f;
     [SerializeField, Tooltip("Health when the player dies")]
     private float minHealth = 0f;
-    [SerializeField, Tooltip("Current Health")]
-    private float currentHealth = 100f;
-    
+    [SerializeField, Range(0,100), Tooltip("Current Health")]
+    private float currentHealth = Mathf.Clamp(100, 0, 100);
+
+    public Slider healthBar;
+    public Text currentState;
 
     /// <summary>
     /// On start go to next state
@@ -48,6 +51,12 @@ public class StatePointAI : MonoBehaviour
     {
         Debug.Log("start");
         NextState();
+    }
+
+    public void Update()
+    {
+        healthBar.value = currentHealth;
+        currentState.text = "Current State: " + state.ToString();
     }
 
     /// <summary>
@@ -77,6 +86,7 @@ public class StatePointAI : MonoBehaviour
         while (state == State.Patrol)
         {
             Patrol();
+            currentHealth += Time.deltaTime * 7;
             yield return null;
             if (Vector2.Distance(player.transform.position, AiSprite.transform.position) < chasePlayerDistance)
             {
@@ -117,12 +127,12 @@ public class StatePointAI : MonoBehaviour
     /// <returns></returns>
     private IEnumerator AttackingState()
     {
-        Debug.Log("attacking");
+        Debug.Log("Attacking");
         while (state == State.Attacking)
         {
             Attacked();
             yield return null;
-            if (currentHealth == lowHealth)
+            if (currentHealth <= lowHealth)
             {
                 state = State.Flee;
             }
@@ -200,7 +210,7 @@ public class StatePointAI : MonoBehaviour
     /// </summary>
     private void Flee()
     {
-        if (currentHealth == lowHealth)
+        if (currentHealth <= lowHealth)
         {
             MoveAi(AiSprite.transform.position - player.transform.position);
         }
@@ -246,11 +256,14 @@ public class StatePointAI : MonoBehaviour
     {
         if (Vector2.Distance(AiSprite.transform.position, player.transform.position) < minAttackDistance)
         {
-            currentHealth--;
+            currentHealth -= Time.deltaTime * 7;
 
         }
+        else {
+            Chase();
+        }
 
-        if (currentHealth == minHealth)
+        if (currentHealth <= minHealth)
         {
             
 
